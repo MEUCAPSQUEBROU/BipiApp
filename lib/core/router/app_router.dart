@@ -6,25 +6,37 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/home/home_screen.dart';
+import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/quiz/quiz_screen.dart';
 import '../../features/ranking/ranking_screen.dart';
 import '../../features/trilha/models/phase.dart';
 import '../../features/trilha/trilha_screen.dart';
 import '../auth/auth_service.dart';
+import '../onboarding/onboarding_service.dart';
 
 const _authRoutes = {'/login', '/register'};
 
 final appRouter = GoRouter(
   initialLocation: '/',
-  refreshListenable: GoRouterRefreshStream(authService.authStateChanges),
+  refreshListenable: Listenable.merge([
+    GoRouterRefreshStream(authService.authStateChanges),
+    onboardingService,
+  ]),
   redirect: (context, state) {
     final loggedIn = authService.currentUser != null;
-    final goingToAuth = _authRoutes.contains(state.matchedLocation);
+    final loc = state.matchedLocation;
+    final goingToAuth = _authRoutes.contains(loc);
 
     // Sem login: só pode ver as telas de auth.
-    if (!loggedIn && !goingToAuth) return '/login';
-    // Já logado: não faz sentido ver login/cadastro.
-    if (loggedIn && goingToAuth) return '/';
+    if (!loggedIn) {
+      return goingToAuth ? null : '/login';
+    }
+    // Logado mas ainda não viu a intro do Bipi: força o onboarding.
+    if (!onboardingService.done) {
+      return loc == '/onboarding' ? null : '/onboarding';
+    }
+    // Já logado e com a intro vista: sai das telas de auth/onboarding.
+    if (goingToAuth || loc == '/onboarding') return '/';
     return null;
   },
   routes: [
@@ -43,6 +55,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/ranking',
       builder: (context, state) => const RankingScreen(),
+    ),
+    GoRoute(
+      path: '/onboarding',
+      builder: (context, state) => const OnboardingScreen(),
     ),
     GoRoute(
       path: '/login',

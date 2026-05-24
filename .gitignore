@@ -44,6 +44,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Sessões do compilador Kotlin (geradas pelo Gradle build)
+android/.kotlin/
+
 # Firebase — contém API key e config do projeto; manter fora do repo.
 # Ao clonar/trocar de máquina: re-baixar do Console do Firebase
 # (Configurações do projeto > Seus apps > app Android) e colocar em android/app/.

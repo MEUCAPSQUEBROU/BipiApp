@@ -280,6 +280,12 @@ Firestore ativado (região **southamerica-east1**, modo produção) + regras pub
 - **Testado no dispositivo real:** pontuou e apareceu no ranking ✅.
 - ⚠️ Pendências: progresso da trilha ainda **em memória** (dá pra "farmar" pontos reabrindo o app, pois o `firstTime` é in-memory) → persistência é o próximo passo. **Onboarding do Bipi** (balões pós-login) ainda não feito.
 
+### 2026-05-24 (onboarding) — Introdução do Bipi pós-login
+
+`shared_preferences` adicionado. `lib/core/onboarding/onboarding_service.dart` (singleton `onboardingService`, flag `onboarding_done` **por dispositivo**, carregada no `main()`). `lib/features/onboarding/onboarding_screen.dart`: 5 passos com o Bipi trocando de expressão + balões de fala (PageView, indicador de bolinhas, "Pular", "BORA COMEÇAR"). Gateado no go_router: logado e sem onboarding → `/onboarding`; `refreshListenable` virou `Listenable.merge([GoRouterRefreshStream(auth), onboardingService])`.
+- ✅ **Fecha os 3 pedidos originais:** trilha + ranking + onboarding.
+- ⚠️ Flag do onboarding é por dispositivo (não por conta). **Persistência do progresso da trilha** continua pendente (próximo candidato natural).
+
 ---
 
 ## 8. Como o Claude deve usar este arquivo
