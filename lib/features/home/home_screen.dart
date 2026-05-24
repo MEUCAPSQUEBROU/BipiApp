@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auth/auth_service.dart';
 import '../../core/theme/app_colors.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  String _greeting() {
+    final user = authService.currentUser;
+    final name = user?.displayName?.trim();
+    if (name != null && name.isNotEmpty) return 'Olá, ${name.split(' ').first}!';
+    final email = user?.email;
+    if (email != null && email.isNotEmpty) return 'Olá!';
+    return 'Bem-vindo!';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +41,7 @@ class HomeScreen extends StatelessWidget {
                 Text('Bipi', style: theme.textTheme.displayMedium),
                 const SizedBox(height: 8),
                 Text(
-                  'O Duolingo do trânsito',
+                  _greeting(),
                   style: theme.textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 48),
@@ -46,8 +56,8 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () {},
-                    child: const Text('JÁ TENHO UMA CONTA'),
+                    onPressed: () => authService.signOut(),
+                    child: const Text('SAIR'),
                   ),
                 ),
               ],
