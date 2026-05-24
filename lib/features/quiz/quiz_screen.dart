@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/bipi_mascot.dart';
+import '../ranking/data/score_repository.dart';
 import '../trilha/data/trilha_progress.dart';
 import '../trilha/models/phase.dart';
 import 'data/questions_repository.dart';
@@ -82,7 +83,12 @@ class _QuizScreenState extends State<QuizScreen> {
     });
     final phase = widget.phase;
     if (phase != null && _index >= _questions.length) {
+      final firstTime = !trilhaProgress.isCompleted(phase.dayKey, phase.index);
       trilhaProgress.markCompleted(phase.dayKey, phase.index);
+      if (firstTime) {
+        // 10 pontos por acerto na fase.
+        scoreRepository.addPoints(_correctCount * 10);
+      }
     }
   }
 

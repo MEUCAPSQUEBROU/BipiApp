@@ -271,6 +271,15 @@ users/{uid} {
 
 **Decisões:** mascote = o próprio Bipi (app leva o nome dele). Ranking será **online via Firestore** (próximo passo, em andamento). Conteúdo: ~40 perguntas (expansível).
 
+### 2026-05-24 (ranking online) — Ranking top 10 via Firestore
+
+Firestore ativado (região **southamerica-east1**, modo produção) + regras publicadas (`ranking/{uid}`: leitura p/ qualquer logado, escrita só do próprio uid). Dependência `cloud_firestore` ^6.4.1.
+- `lib/features/ranking/data/score_repository.dart`: `ScoreRepository` (singleton `scoreRepository`). Coleção `ranking/{uid}` = { nome, pontos, atualizadoEm }. `addPoints` usa `FieldValue.increment` (best-effort, try/catch) e `top10()` faz `orderBy('pontos' desc).limit(10)`.
+- `lib/features/ranking/ranking_screen.dart`: top 10 com pódio 🥇🥈🥉, destaque do próprio usuário, pull-to-refresh, estados de vazio/erro com o Bipi.
+- Home: botão **RANKING** (rota `/ranking`). Quiz: **+10 pts por acerto** ao concluir uma fase (só na 1ª vez, checagem in-memory).
+- **Testado no dispositivo real:** pontuou e apareceu no ranking ✅.
+- ⚠️ Pendências: progresso da trilha ainda **em memória** (dá pra "farmar" pontos reabrindo o app, pois o `firstTime` é in-memory) → persistência é o próximo passo. **Onboarding do Bipi** (balões pós-login) ainda não feito.
+
 ---
 
 ## 8. Como o Claude deve usar este arquivo

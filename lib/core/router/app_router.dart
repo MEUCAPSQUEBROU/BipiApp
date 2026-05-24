@@ -7,6 +7,7 @@ import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/quiz/quiz_screen.dart';
+import '../../features/ranking/ranking_screen.dart';
 import '../../features/trilha/models/phase.dart';
 import '../../features/trilha/trilha_screen.dart';
 import '../auth/auth_service.dart';
@@ -38,6 +39,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/quiz',
       builder: (context, state) => QuizScreen(phase: state.extra as Phase?),
+    ),
+    GoRoute(
+      path: '/ranking',
+      builder: (context, state) => const RankingScreen(),
     ),
     GoRoute(
       path: '/login',

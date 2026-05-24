@@ -47,6 +47,15 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/ranking'),
+                    icon: const Icon(Icons.emoji_events_outlined),
+                    label: const Text('RANKING'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () => authService.signOut(),
                     child: const Text('SAIR'),
