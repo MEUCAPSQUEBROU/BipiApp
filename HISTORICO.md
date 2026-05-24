@@ -290,6 +290,13 @@ Firestore ativado (região **southamerica-east1**, modo produção) + regras pub
 
 Tela de ranking redesenhada: **pódio do top 3** (2-1-3, com 👑 no 1º) com **avatar** (foto do Google via `photoURL`, ou a inicial do nome como fallback), **primeiro nome** e pontos; lista do 4º ao 10º abaixo, também com avatar. `RankingEntry` ganhou `fotoUrl` + getter `primeiroNome`; `ScoreRepository.addPoints` passou a gravar `fotoUrl` (= `user.photoURL`). Avatar usa `Image.network` com fallback (errorBuilder/loadingBuilder) para a inicial.
 
+### 2026-05-24 (finalização) — Ícone do app, ajuste de dificuldade e APK
+
+- **Ícone do app:** o mascote Bipi (imagem gerada por IA) virou o launcher icon via `flutter_launcher_icons`. Fonte em `assets/icon/app_icon.png` (full-bleed, recortada do canvas landscape do Gemini com flood-fill C#) + `app_icon_fg.png`. Adaptativo (Android 8+): fundo navy `#0D4872` + Bipi no foreground. Original em `assets/icon/_originais/` (gitignored).
+- **Dificuldade:** removido o "JOGAR DE NOVO" no modo trilha (`_ResultView.showRestart=false` quando há `phase`) — cada fase do dia é **tentativa única**. No modo avulso o botão continua.
+- **APK release:** `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk` (~53 MB, universal). Assinado com a chave **debug** (config atual) — instalável por sideload e o Google Sign-In funciona (SHA-1 dessa chave já registrado). Para Play Store, criar uma keystore de release própria.
+- **Git:** commits agora **sem** `Co-Authored-By` (ver memória). Repo migrado para `MEUCAPSQUEBROU/BipiApp` (histórico reescrito sem a co-autoria); `origin` aponta para lá.
+
 ---
 
 ## 8. Como o Claude deve usar este arquivo

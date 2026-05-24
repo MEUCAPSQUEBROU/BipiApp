@@ -113,6 +113,7 @@ class _QuizScreenState extends State<QuizScreen> {
         onRestart: _restart,
         onHome: () => context.go(widget.phase != null ? '/trilha' : '/'),
         homeLabel: widget.phase != null ? 'VOLTAR À TRILHA' : 'VOLTAR PRO INÍCIO',
+        showRestart: widget.phase == null,
       );
     }
 
@@ -422,6 +423,7 @@ class _ResultView extends StatelessWidget {
     required this.onRestart,
     required this.onHome,
     this.homeLabel = 'VOLTAR PRO INÍCIO',
+    this.showRestart = true,
   });
 
   final int correct;
@@ -430,6 +432,9 @@ class _ResultView extends StatelessWidget {
   final VoidCallback onRestart;
   final VoidCallback onHome;
   final String homeLabel;
+
+  /// Se falso, esconde o "JOGAR DE NOVO" (usado na trilha: fase é tentativa única).
+  final bool showRestart;
 
   @override
   Widget build(BuildContext context) {
@@ -481,21 +486,30 @@ class _ResultView extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onRestart,
-                  child: const Text('JOGAR DE NOVO'),
+              if (showRestart) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onRestart,
+                    child: const Text('JOGAR DE NOVO'),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: onHome,
-                  child: Text(homeLabel),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: onHome,
+                    child: Text(homeLabel),
+                  ),
                 ),
-              ),
+              ] else
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onHome,
+                    child: Text(homeLabel),
+                  ),
+                ),
             ],
           ),
         ),
