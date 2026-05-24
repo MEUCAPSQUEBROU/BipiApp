@@ -52,6 +52,7 @@ android/.kotlin/
 # (Configurações do projeto > Seus apps > app Android) e colocar em android/app/.
 android/app/google-services.json
 
-# Backup das imagens originais do mascote (com fundo). As versões usadas no app
-# (recortadas/transparentes) ficam em assets/mascote/ e são versionadas.
+# Backup das imagens originais (com fundo / fonte). As versões usadas no app
+# ficam fora de _originais/ e são versionadas.
 assets/mascote/_originais/
+assets/icon/_originais/
