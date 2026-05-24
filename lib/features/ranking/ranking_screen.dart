@@ -53,19 +53,143 @@ class _RankingScreenState extends State<RankingScreen> {
                 onRetry: _reload,
               );
             }
+
             final myUid = scoreRepository.currentUid;
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-              itemCount: entries.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, i) => _RankTile(
-                position: i + 1,
-                entry: entries[i],
-                isMe: entries[i].uid == myUid,
-              ),
+            final top3 = entries.take(3).toList();
+            final rest = entries.length > 3 ? entries.sublist(3) : const [];
+
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+              children: [
+                _Podium(top3: top3, myUid: myUid),
+                if (rest.isNotEmpty) ...[
+                  const SizedBox(height: 28),
+                  for (var i = 0; i < rest.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _RankTile(
+                        position: i + 4,
+                        entry: rest[i],
+                        isMe: rest[i].uid == myUid,
+                      ),
+                    ),
+                ],
+              ],
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+Color _medalColor(int position) => switch (position) {
+      1 => const Color(0xFFFFC93C),
+      2 => const Color(0xFFC0C7D1),
+      3 => const Color(0xFFE0A36B),
+      _ => AppColors.surfaceVariant,
+    };
+
+class _Podium extends StatelessWidget {
+  const _Podium({required this.top3, required this.myUid});
+  final List<RankingEntry> top3;
+  final String? myUid;
+
+  @override
+  Widget build(BuildContext context) {
+    final first = top3.isNotEmpty ? top3[0] : null;
+    final second = top3.length > 1 ? top3[1] : null;
+    final third = top3.length > 2 ? top3[2] : null;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (second != null)
+          _PodiumColumn(entry: second, position: 2, isMe: second.uid == myUid),
+        if (first != null)
+          _PodiumColumn(entry: first, position: 1, isMe: first.uid == myUid),
+        if (third != null)
+          _PodiumColumn(entry: third, position: 3, isMe: third.uid == myUid),
+      ],
+    );
+  }
+}
+
+class _PodiumColumn extends StatelessWidget {
+  const _PodiumColumn({
+    required this.entry,
+    required this.position,
+    required this.isMe,
+  });
+
+  final RankingEntry entry;
+  final int position;
+  final bool isMe;
+
+  @override
+  Widget build(BuildContext context) {
+    final medal = _medalColor(position);
+    final pillarHeight = switch (position) { 1 => 110.0, 2 => 86.0, _ => 66.0 };
+    final avatarSize = position == 1 ? 68.0 : 56.0;
+
+    return SizedBox(
+      width: 104,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: 26,
+            child: position == 1
+                ? const Text('👑', style: TextStyle(fontSize: 22))
+                : null,
+          ),
+          _Avatar(
+            fotoUrl: entry.fotoUrl,
+            nome: entry.nome,
+            size: avatarSize,
+            ring: medal,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isMe ? '${entry.primeiroNome} (você)' : entry.primeiroNome,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+              color: isMe ? AppColors.primaryDark : AppColors.textPrimary,
+            ),
+          ),
+          Text(
+            '${entry.pontos} pts',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: 88,
+            height: pillarHeight,
+            alignment: Alignment.topCenter,
+            padding: const EdgeInsets.only(top: 10),
+            decoration: BoxDecoration(
+              color: medal,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Text(
+              '$position',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 26,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -84,16 +208,8 @@ class _RankTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final medal = switch (position) {
-      1 => const Color(0xFFFFC93C),
-      2 => const Color(0xFFC0C7D1),
-      3 => const Color(0xFFE0A36B),
-      _ => AppColors.surfaceVariant,
-    };
-    final isPodium = position <= 3;
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: isMe ? AppColors.primary.withValues(alpha: 0.12) : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -104,23 +220,25 @@ class _RankTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: medal,
-              shape: BoxShape.circle,
-            ),
+          SizedBox(
+            width: 24,
             child: Text(
               '$position',
-              style: TextStyle(
+              textAlign: TextAlign.center,
+              style: const TextStyle(
                 fontWeight: FontWeight.w800,
-                color: isPodium ? Colors.white : AppColors.textSecondary,
+                color: AppColors.textSecondary,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
+          _Avatar(
+            fotoUrl: entry.fotoUrl,
+            nome: entry.nome,
+            size: 40,
+            ring: AppColors.border,
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               isMe ? '${entry.nome} (você)' : entry.nome,
@@ -150,6 +268,72 @@ class _RankTile extends StatelessWidget {
   }
 }
 
+/// Avatar circular: foto do usuário (se houver) ou a inicial do nome.
+class _Avatar extends StatelessWidget {
+  const _Avatar({
+    required this.fotoUrl,
+    required this.nome,
+    required this.size,
+    required this.ring,
+  });
+
+  final String? fotoUrl;
+  final String nome;
+  final double size;
+  final Color ring;
+
+  @override
+  Widget build(BuildContext context) {
+    final trimmed = nome.trim();
+    final initial = trimmed.isEmpty ? '?' : trimmed[0].toUpperCase();
+    final fallback = _Initial(initial: initial, size: size);
+
+    Widget inner = fallback;
+    final url = fotoUrl;
+    if (url != null && url.isNotEmpty) {
+      inner = Image.network(
+        url,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => fallback,
+        loadingBuilder: (context, child, progress) =>
+            progress == null ? child : fallback,
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(color: ring, shape: BoxShape.circle),
+      child: ClipOval(child: SizedBox(width: size, height: size, child: inner)),
+    );
+  }
+}
+
+class _Initial extends StatelessWidget {
+  const _Initial({required this.initial, required this.size});
+  final String initial;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      color: AppColors.primary,
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: TextStyle(
+          color: AppColors.onPrimary,
+          fontWeight: FontWeight.w800,
+          fontSize: size * 0.42,
+        ),
+      ),
+    );
+  }
+}
+
 class _Message extends StatelessWidget {
   const _Message({
     required this.mood,
@@ -166,7 +350,6 @@ class _Message extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // ListView para o RefreshIndicator funcionar mesmo "vazio".
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 64),
       children: [

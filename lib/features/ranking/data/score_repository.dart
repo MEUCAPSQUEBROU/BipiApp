@@ -7,21 +7,31 @@ class RankingEntry {
     required this.uid,
     required this.nome,
     required this.pontos,
+    this.fotoUrl,
   });
 
   final String uid;
   final String nome;
   final int pontos;
+  final String? fotoUrl;
+
+  /// Primeiro nome, para exibição compacta (pódio).
+  String get primeiroNome {
+    final t = nome.trim();
+    return t.isEmpty ? 'Anônimo' : t.split(RegExp(r'\s+')).first;
+  }
 
   factory RankingEntry.fromDoc(
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) {
     final data = doc.data();
     final nome = (data['nome'] as String?)?.trim();
+    final foto = (data['fotoUrl'] as String?)?.trim();
     return RankingEntry(
       uid: doc.id,
       nome: (nome == null || nome.isEmpty) ? 'Anônimo' : nome,
       pontos: (data['pontos'] as num?)?.toInt() ?? 0,
+      fotoUrl: (foto == null || foto.isEmpty) ? null : foto,
     );
   }
 }
@@ -56,6 +66,7 @@ class ScoreRepository {
     try {
       await _ranking.doc(user.uid).set({
         'nome': nome,
+        'fotoUrl': user.photoURL,
         'pontos': FieldValue.increment(points),
         'atualizadoEm': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));

@@ -286,6 +286,10 @@ Firestore ativado (região **southamerica-east1**, modo produção) + regras pub
 - ✅ **Fecha os 3 pedidos originais:** trilha + ranking + onboarding.
 - ⚠️ Flag do onboarding é por dispositivo (não por conta). **Persistência do progresso da trilha** continua pendente (próximo candidato natural).
 
+### 2026-05-24 (ranking UI) — Pódio na tela de ranking
+
+Tela de ranking redesenhada: **pódio do top 3** (2-1-3, com 👑 no 1º) com **avatar** (foto do Google via `photoURL`, ou a inicial do nome como fallback), **primeiro nome** e pontos; lista do 4º ao 10º abaixo, também com avatar. `RankingEntry` ganhou `fotoUrl` + getter `primeiroNome`; `ScoreRepository.addPoints` passou a gravar `fotoUrl` (= `user.photoURL`). Avatar usa `Image.network` com fallback (errorBuilder/loadingBuilder) para a inicial.
+
 ---
 
 ## 8. Como o Claude deve usar este arquivo
