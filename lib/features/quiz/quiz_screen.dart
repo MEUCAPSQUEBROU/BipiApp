@@ -5,11 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/bipi_mascot.dart';
+import '../trilha/data/trilha_progress.dart';
+import '../trilha/models/phase.dart';
 import 'data/questions_repository.dart';
 import 'models/question.dart';
 
 class QuizScreen extends StatefulWidget {
-  const QuizScreen({super.key});
+  const QuizScreen({super.key, this.phase});
+
+  /// Quando vem da trilha, contém a fase a ser jogada. Nulo = jogo avulso.
+  final Phase? phase;
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -29,7 +35,8 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
-    _questions = const QuestionsRepository().loadStarterPack();
+    _questions =
+        widget.phase?.questions ?? const QuestionsRepository().loadStarterPack();
     _confetti = ConfettiController(duration: const Duration(milliseconds: 800));
   }
 
@@ -73,6 +80,10 @@ class _QuizScreenState extends State<QuizScreen> {
       _selectedIndex = null;
       _answered = false;
     });
+    final phase = widget.phase;
+    if (phase != null && _index >= _questions.length) {
+      trilhaProgress.markCompleted(phase.dayKey, phase.index);
+    }
   }
 
   void _restart() {
@@ -94,7 +105,8 @@ class _QuizScreenState extends State<QuizScreen> {
         total: _questions.length,
         bestStreak: _bestStreak,
         onRestart: _restart,
-        onHome: () => context.go('/'),
+        onHome: () => context.go(widget.phase != null ? '/trilha' : '/'),
+        homeLabel: widget.phase != null ? 'VOLTAR À TRILHA' : 'VOLTAR PRO INÍCIO',
       );
     }
 
@@ -102,7 +114,7 @@ class _QuizScreenState extends State<QuizScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.go('/'),
+          onPressed: () => context.go(widget.phase != null ? '/trilha' : '/'),
         ),
         title: _StreakChip(streak: _streak),
         actions: [
@@ -403,6 +415,7 @@ class _ResultView extends StatelessWidget {
     required this.bestStreak,
     required this.onRestart,
     required this.onHome,
+    this.homeLabel = 'VOLTAR PRO INÍCIO',
   });
 
   final int correct;
@@ -410,6 +423,7 @@ class _ResultView extends StatelessWidget {
   final int bestStreak;
   final VoidCallback onRestart;
   final VoidCallback onHome;
+  final String homeLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -424,18 +438,9 @@ class _ResultView extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(),
-              Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  color: ok ? AppColors.success : AppColors.streak,
-                  borderRadius: BorderRadius.circular(40),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  ok ? '🏆' : '💪',
-                  style: const TextStyle(fontSize: 72),
-                ),
+              BipiMascot(
+                ok ? BipiMood.feliz : BipiMood.duvida,
+                height: 180,
               ),
               const SizedBox(height: 24),
               Text(
@@ -482,7 +487,7 @@ class _ResultView extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: onHome,
-                  child: const Text('VOLTAR PRO INÍCIO'),
+                  child: Text(homeLabel),
                 ),
               ),
             ],

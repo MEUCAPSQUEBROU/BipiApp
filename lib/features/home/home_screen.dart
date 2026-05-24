@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/bipi_mascot.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -27,17 +28,8 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(32),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text('🚦', style: TextStyle(fontSize: 64)),
-                ),
-                const SizedBox(height: 24),
+                const BipiMascot(BipiMood.normal, height: 170),
+                const SizedBox(height: 16),
                 Text('Bipi', style: theme.textTheme.displayMedium),
                 const SizedBox(height: 8),
                 Text(
@@ -48,7 +40,7 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => context.push('/quiz'),
+                    onPressed: () => context.push('/trilha'),
                     child: const Text('COMEÇAR'),
                   ),
                 ),

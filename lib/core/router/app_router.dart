@@ -7,6 +7,8 @@ import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/quiz/quiz_screen.dart';
+import '../../features/trilha/models/phase.dart';
+import '../../features/trilha/trilha_screen.dart';
 import '../auth/auth_service.dart';
 
 const _authRoutes = {'/login', '/register'};
@@ -30,8 +32,12 @@ final appRouter = GoRouter(
       builder: (context, state) => const HomeScreen(),
     ),
     GoRoute(
+      path: '/trilha',
+      builder: (context, state) => const TrilhaScreen(),
+    ),
+    GoRoute(
       path: '/quiz',
-      builder: (context, state) => const QuizScreen(),
+      builder: (context, state) => QuizScreen(phase: state.extra as Phase?),
     ),
     GoRoute(
       path: '/login',

@@ -262,6 +262,15 @@ users/{uid} {
 - LGPD/ECA: consentimento/aviso de privacidade antes de produção.
 - Rodar em Web/iOS exigirá registrar essas plataformas (usar `flutterfire configure`, já instalado).
 
+### 2026-05-24 (mascote + trilha) — Identidade visual e trilha diária
+
+**Mascote Bipi:** 4 expressões (normal / feliz / dúvida / decepção) geradas por IA. Fundo recortado p/ transparente + auto-crop (flood-fill via `Add-Type` C#, sem ImageMagick). Em `assets/mascote/bipi_*.png`. Widget `BipiMascot(BipiMood.x)` em `lib/core/widgets/bipi_mascot.dart`. Usado no login, home e tela de resultado do quiz. Conceito completo em `docs/MASCOTE.md`. Originais (com fundo) em `assets/mascote/_originais/` (**gitignored**).
+
+**Trilha diária (estilo Duolingo):** em `lib/features/trilha/`. 5 fases/dia × 3 perguntas; set **determinístico por data** (`DailyChallenge`, seed = data → mesmo conjunto pra todos, p/ ranking justo). Caminho sinuoso com fases bloqueada/atual/concluída (`TrilhaScreen`). Banco de perguntas expandido 10 → **40** (`QuestionsRepository.all()`). Home **COMEÇAR → `/trilha`**; o quiz recebe a `Phase` via `extra` e marca conclusão ao terminar.
+- ⚠️ **Progresso em memória** (`TrilhaProgress` singleton) — zera ao fechar o app. Persistência entra junto com o ranking.
+
+**Decisões:** mascote = o próprio Bipi (app leva o nome dele). Ranking será **online via Firestore** (próximo passo, em andamento). Conteúdo: ~40 perguntas (expansível).
+
 ---
 
 ## 8. Como o Claude deve usar este arquivo

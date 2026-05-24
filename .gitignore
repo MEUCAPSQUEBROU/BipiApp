@@ -48,3 +48,7 @@ app.*.map.json
 # Ao clonar/trocar de máquina: re-baixar do Console do Firebase
 # (Configurações do projeto > Seus apps > app Android) e colocar em android/app/.
 android/app/google-services.json
+
+# Backup das imagens originais do mascote (com fundo). As versões usadas no app
+# (recortadas/transparentes) ficam em assets/mascote/ e são versionadas.
+assets/mascote/_originais/

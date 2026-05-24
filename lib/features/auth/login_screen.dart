@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/bipi_mascot.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/google_button.dart';
 
@@ -98,19 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Center(
-                      child: Container(
-                        width: 88,
-                        height: 88,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Text('🚦', style: TextStyle(fontSize: 44)),
-                      ),
+                    const Center(
+                      child: BipiMascot(BipiMood.normal, height: 150),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
                     Text(
                       'Bipi',
                       textAlign: TextAlign.center,
