@@ -55,15 +55,15 @@ def render(notes, tail=0.12):
     return buf
 
 
-def write_wav(name, buf):
+def write_wav(name, buf, target_peak=0.89):
     # fade-in/out curtos nas pontas para não estalar.
     fade = int(0.008 * SR)
     for i in range(min(fade, len(buf))):
         buf[i] *= i / fade
         buf[-1 - i] *= i / fade
-    # normaliza para pico 0.89 (deixa folga, sem clipar).
+    # normaliza para o pico-alvo (sons de UI ficam mais baixos que feedback).
     peak = max((abs(x) for x in buf), default=1.0) or 1.0
-    k = 0.89 / peak
+    k = target_peak / peak
     frames = b"".join(
         struct.pack("<h", int(max(-1.0, min(1.0, x * k)) * 32767)) for x in buf
     )
@@ -112,9 +112,9 @@ write_wav("victory.wav", render([
     (0.52, G6, 0.9, 0.6, {"decay": 4.0}),
 ], tail=0.25))
 
-# 👆 tap: blip curtíssimo e discreto.
+# 👆 tap: tique curtíssimo, suave e BEM mais baixo que os sons de feedback.
 write_wav("tap.wav", render([
-    (0.00, 1100.0, 0.05, 0.55, {"harmonics": [(1, 1.0)], "decay": 30.0}),
-], tail=0.02))
+    (0.00, E5, 0.035, 0.5, {"harmonics": [(1, 1.0), (2, 0.15)], "decay": 45.0}),
+], tail=0.015), target_peak=0.30)
 
 print("Pronto.")

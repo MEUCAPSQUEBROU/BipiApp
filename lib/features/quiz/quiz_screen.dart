@@ -83,11 +83,6 @@ class _QuizScreenState extends State<QuizScreen> {
 
   void _next() {
     final phase = widget.phase;
-    // Na última pergunta da fase o som de conclusão já toca; não empilha o tap.
-    final completingPhase = phase != null && _index + 1 >= _questions.length;
-    if (!completingPhase) {
-      soundService.play(Sfx.tap);
-    }
     setState(() {
       _index += 1;
       _selectedIndex = null;
