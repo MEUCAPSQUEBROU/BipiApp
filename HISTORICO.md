@@ -297,6 +297,11 @@ Tela de ranking redesenhada: **pódio do top 3** (2-1-3, com 👑 no 1º) com **
 - **APK release:** `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk` (~53 MB, universal). Assinado com a chave **debug** (config atual) — instalável por sideload e o Google Sign-In funciona (SHA-1 dessa chave já registrado). Para Play Store, criar uma keystore de release própria.
 - **Git:** commits agora **sem** `Co-Authored-By` (ver memória). Repo migrado para `MEUCAPSQUEBROU/BipiApp` (histórico reescrito sem a co-autoria); `origin` aponta para lá.
 
+### 2026-05-24 (perguntas) — Rebalanceamento e rampa de dificuldade
+
+- **Banco reescrito** (40 perguntas: 15 fácil, 15 médio, 10 difícil). Corrigido o problema "resposta certa = a mais longa": as 4 alternativas têm tamanho parecido e a posição da correta varia. O detalhamento foi para o campo `explanation` (mostrado só após responder).
+- `DailyChallenge` agora monta a trilha **por dificuldade** (plano `[facil, facil, medio, medio, dificil]`): Fase 1-2 fáceis, 3-4 médias, 5 difícil. Determinístico por dia e sem repetir pergunta no mesmo dia (verificado em runtime: 15 únicas/dia).
+
 ---
 
 ## 8. Como o Claude deve usar este arquivo
