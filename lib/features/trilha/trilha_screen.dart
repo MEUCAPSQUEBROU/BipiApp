@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/audio/sound_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/bipi_mascot.dart';
 import 'data/daily_challenge.dart';
@@ -66,7 +67,10 @@ class TrilhaScreen extends StatelessWidget {
                               ? _NodeState.current
                               : _NodeState.locked),
                       onTap: i == current
-                          ? () => context.push('/quiz', extra: phases[i])
+                          ? () {
+                              soundService.play(Sfx.tap);
+                              context.push('/quiz', extra: phases[i]);
+                            }
                           : null,
                     ),
                   ),
@@ -272,8 +276,20 @@ class _ProgressChip extends StatelessWidget {
   }
 }
 
-class _CompletionCard extends StatelessWidget {
+class _CompletionCard extends StatefulWidget {
   const _CompletionCard();
+
+  @override
+  State<_CompletionCard> createState() => _CompletionCardState();
+}
+
+class _CompletionCardState extends State<_CompletionCard> {
+  @override
+  void initState() {
+    super.initState();
+    // O card só é montado quando a trilha do dia é concluída.
+    soundService.play(Sfx.victory);
+  }
 
   @override
   Widget build(BuildContext context) {

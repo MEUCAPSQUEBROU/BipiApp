@@ -2,8 +2,10 @@ import 'dart:math' as math;
 
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/audio/sound_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/bipi_mascot.dart';
 import '../ranking/data/score_repository.dart';
@@ -68,7 +70,11 @@ class _QuizScreenState extends State<QuizScreen> {
     });
     if (isCorrect) {
       _confetti.play();
+      soundService.play(Sfx.correct);
+      HapticFeedback.lightImpact();
     } else {
+      soundService.play(Sfx.wrong);
+      HapticFeedback.mediumImpact();
       Future.delayed(const Duration(milliseconds: 450), () {
         if (mounted) setState(() => _showRedFlash = false);
       });
@@ -76,12 +82,17 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _next() {
+    final phase = widget.phase;
+    // Na última pergunta da fase o som de conclusão já toca; não empilha o tap.
+    final completingPhase = phase != null && _index + 1 >= _questions.length;
+    if (!completingPhase) {
+      soundService.play(Sfx.tap);
+    }
     setState(() {
       _index += 1;
       _selectedIndex = null;
       _answered = false;
     });
-    final phase = widget.phase;
     if (phase != null && _index >= _questions.length) {
       final firstTime = !trilhaProgress.isCompleted(phase.dayKey, phase.index);
       trilhaProgress.markCompleted(phase.dayKey, phase.index);
@@ -89,6 +100,7 @@ class _QuizScreenState extends State<QuizScreen> {
         // 10 pontos por acerto na fase.
         scoreRepository.addPoints(_correctCount * 10);
       }
+      soundService.play(Sfx.phaseComplete);
     }
   }
 
@@ -125,6 +137,18 @@ class _QuizScreenState extends State<QuizScreen> {
         ),
         title: _StreakChip(streak: _streak),
         actions: [
+          ListenableBuilder(
+            listenable: soundService,
+            builder: (context, _) => IconButton(
+              icon: Icon(
+                soundService.muted
+                    ? Icons.volume_off_rounded
+                    : Icons.volume_up_rounded,
+              ),
+              tooltip: soundService.muted ? 'Ativar som' : 'Silenciar',
+              onPressed: soundService.toggleMuted,
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(

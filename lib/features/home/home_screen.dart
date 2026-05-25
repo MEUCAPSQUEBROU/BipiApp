@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/audio/sound_service.dart';
 import '../../core/auth/auth_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/bipi_mascot.dart';
@@ -40,7 +41,10 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => context.push('/trilha'),
+                    onPressed: () {
+                      soundService.play(Sfx.tap);
+                      context.push('/trilha');
+                    },
                     child: const Text('COMEÇAR'),
                   ),
                 ),
@@ -48,7 +52,10 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () => context.push('/ranking'),
+                    onPressed: () {
+                      soundService.play(Sfx.tap);
+                      context.push('/ranking');
+                    },
                     icon: const Icon(Icons.emoji_events_outlined),
                     label: const Text('RANKING'),
                   ),
@@ -57,7 +64,10 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () => authService.signOut(),
+                    onPressed: () {
+                      soundService.play(Sfx.tap);
+                      authService.signOut();
+                    },
                     child: const Text('SAIR'),
                   ),
                 ),

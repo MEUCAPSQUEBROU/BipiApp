@@ -19,7 +19,7 @@ A meta é distribuir o app em escolas como ferramenta de apoio à campanha **Mai
 - **Não infantilizar.** O público é ensino médio; o tom e o visual respeitam isso.
 - **Decisão > memorização.** Perguntas são situações reais ("o que você faria se..."), não decoreba de artigo do CTB.
 - **Feedback é o aprendizado.** Cada resposta vem com uma explicação curta sobre o porquê.
-- **Engajamento curto.** Sessões rápidas de 5-10 perguntas, com gatilhos visuais (confete, flash) que dão peso a acerto e erro.
+- **Engajamento curto.** Sessões rápidas de poucas perguntas, com gatilhos sensoriais (confete, flash, som e vibração) que dão peso a acerto e erro.
 
 ---
 
@@ -27,26 +27,27 @@ A meta é distribuir o app em escolas como ferramenta de apoio à campanha **Mai
 
 Já implementado:
 
-- Tema visual customizado (paleta Maio Amarelo)
-- Tela inicial
+- Tema visual customizado (paleta Maio Amarelo) e mascote **Bipi** (ícone do app + expressões)
+- **Autenticação** (Firebase Auth): login/cadastro por e-mail e **login com Google**
+- **Onboarding** do Bipi após o primeiro login
+- **Tela inicial** (Começar, Ranking, Sair)
+- **Trilha diária** estilo Duolingo: caminho de fases que muda a cada dia, com desbloqueio progressivo e rampa de dificuldade
 - Loop principal do quiz:
   - Pergunta + alternativas
   - Feedback colorido nas opções (acerto/erro)
   - Painel de explicação após responder
   - Contador de streak 🔥 no topo
   - Barra de progresso e contador X/Y
-- **Confete no acerto** e **flash vermelho no erro**
+- **Feedback multissensorial:** confete + som no acerto, flash vermelho + som no erro, e vibração (háptico) nos dois
+- **Efeitos sonoros** nos momentos-chave (acerto, erro, fase concluída, trilha completa, toques de botão), com **botão de mudo** que persiste a escolha
 - Tela de resultado com pontuação e maior streak
-- 10 perguntas iniciais hardcoded sobre situações reais (celular ao volante, álcool, cinto, bike, capacete, faixa, pista molhada etc.)
+- **Ranking** com pódio (top 3) e leaderboard, sincronizado via Firestore
+- Banco inicial de perguntas sobre situações reais (celular ao volante, álcool, cinto, bike, capacete, faixa, pista molhada etc.)
 
 Próximos passos planejados:
 
-- [ ] Persistência local de progresso (streak entre sessões)
-- [ ] Sons de feedback
+- [ ] Persistência do progresso da trilha (hoje é em memória — zera ao fechar o app)
 - [ ] Animações de transição entre perguntas
-- [ ] Curva de dificuldade real (sortear perguntas conforme streak)
-- [ ] Onboarding / boas-vindas
-- [ ] Autenticação (Firebase Auth — modo anônimo no início)
 - [ ] Banco de perguntas remoto (Firestore) com fallback local
 - [ ] Tela de perfil e progresso histórico
 - [ ] Curadoria pedagógica das perguntas
@@ -59,7 +60,8 @@ Próximos passos planejados:
 - **Roteamento:** [`go_router`](https://pub.dev/packages/go_router)
 - **Tipografia:** [`google_fonts`](https://pub.dev/packages/google_fonts) (Nunito)
 - **Efeitos visuais:** [`confetti`](https://pub.dev/packages/confetti)
-- **Backend (planejado):** Firebase — Auth, Firestore, Cloud Functions, Analytics
+- **Áudio:** [`audioplayers`](https://pub.dev/packages/audioplayers) (efeitos sintetizados — ver `assets/sounds/`) + `HapticFeedback` nativo
+- **Backend:** Firebase — [`firebase_auth`](https://pub.dev/packages/firebase_auth) (e-mail + Google) e [`cloud_firestore`](https://pub.dev/packages/cloud_firestore) (ranking); persistência local com [`shared_preferences`](https://pub.dev/packages/shared_preferences)
 
 Requisitos mínimos:
 
@@ -101,15 +103,27 @@ lib/
 ├── main.dart                     # Entry point
 ├── app.dart                      # Widget raiz (MaterialApp.router)
 ├── core/
+│   ├── audio/                    # SoundService (efeitos sonoros + mudo)
+│   ├── auth/                     # Firebase Auth
+│   ├── onboarding/               # Estado do onboarding (shared_preferences)
 │   ├── router/                   # go_router (rotas)
-│   └── theme/                    # Cores e ThemeData
-├── features/
-│   ├── home/                     # Tela inicial
-│   └── quiz/                     # Loop do quiz
-│       ├── models/               # Question, dificuldade
-│       ├── data/                 # Repositório local de perguntas
-│       └── quiz_screen.dart      # Tela principal do quiz
-└── shared/                       # Widgets/utilitários compartilhados
+│   ├── theme/                    # Cores e ThemeData
+│   └── widgets/                  # Mascote Bipi e compartilhados
+└── features/
+    ├── auth/                     # Login e cadastro
+    ├── home/                     # Tela inicial
+    ├── onboarding/               # Introdução do Bipi
+    ├── quiz/                     # Loop do quiz (+ models, data)
+    ├── ranking/                  # Pódio e leaderboard (Firestore)
+    └── trilha/                   # Trilha diária de fases
+
+assets/
+├── icon/                         # Ícone do app
+├── mascote/                      # Expressões do Bipi
+└── sounds/                       # Efeitos sonoros (gerados por tool/gen_sounds.py)
+
+tool/
+└── gen_sounds.py                 # Gera os efeitos sonoros (.wav)
 ```
 
 ---

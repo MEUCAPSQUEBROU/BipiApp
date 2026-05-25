@@ -42,6 +42,7 @@ dependencies:
   google_sign_in: ^7.2.0
   cloud_firestore: ^6.4.1
   shared_preferences: ^2.5.5
+  audioplayers: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +78,7 @@ flutter:
 
   assets:
     - assets/mascote/
+    - assets/sounds/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
