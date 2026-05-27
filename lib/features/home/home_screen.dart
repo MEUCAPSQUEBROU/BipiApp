@@ -5,6 +5,7 @@ import '../../core/audio/sound_service.dart';
 import '../../core/auth/auth_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/bipi_mascot.dart';
+import 'widgets/update_banner.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -29,6 +30,7 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const UpdateBanner(),
                 const BipiMascot(BipiMood.normal, height: 170),
                 const SizedBox(height: 16),
                 Text('Bipi', style: theme.textTheme.displayMedium),

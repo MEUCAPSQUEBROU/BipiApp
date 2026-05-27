@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Acesso à rede (checar releases no GitHub e baixar o APK de atualização). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Permite que o app abra o instalador do APK baixado (auto-atualização). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <application
         android:label="bipi"
         android:name="${applicationName}"
