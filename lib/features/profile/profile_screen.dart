@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/auth/auth_service.dart';
 import '../../core/profile/profile_service.dart';
@@ -26,6 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _email;
   String? _fotoUrl;
   int _pontos = 0;
+  String _version = '';
 
   @override
   void initState() {
@@ -41,12 +43,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _load() async {
     final data = await profileService.load();
+    final info = await PackageInfo.fromPlatform();
     if (!mounted) return;
     setState(() {
       _nameCtrl.text = (data.nome ?? '').trim();
       _email = data.email;
       _fotoUrl = data.fotoUrl;
       _pontos = data.pontos;
+      _version = 'Bipi v${info.version}';
       _loading = false;
     });
   }
@@ -229,6 +233,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.error, width: 2),
                     ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    _version,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: AppColors.textMuted),
                   ),
                 ],
               ),
