@@ -1,0 +1,79 @@
+name: Release APK
+
+# Dispara ao dar push de uma tag tipo v1.3.0.
+# Buildaa o APK (assinado com a MESMA debug keystore dos builds locais, via
+# secret) e publica um Release no GitHub com o anexo bipi.apk — o mesmo nome
+# que o QR/banner do evento usam (releases/latest/download/bipi.apk).
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # necessário para criar o release e anexar o APK
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter 3.44.0
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: stable
+          cache: true
+
+      # google-services.json é gitignored → vem de um secret (base64).
+      - name: Restaura google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          mkdir -p android/app
+          echo "$GOOGLE_SERVICES_JSON" | base64 -d > android/app/google-services.json
+
+      # Mesma debug keystore dos builds locais → mesma assinatura (updates
+      # instalam por cima dos apps existentes; o SHA-1 já está no Firebase).
+      - name: Restaura a debug keystore
+        env:
+          DEBUG_KEYSTORE: ${{ secrets.DEBUG_KEYSTORE }}
+        run: |
+          mkdir -p "$HOME/.android"
+          echo "$DEBUG_KEYSTORE" | base64 -d > "$HOME/.android/debug.keystore"
+
+      - name: Versão a partir da tag (remove o "v")
+        id: ver
+        run: echo "name=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      # versionName vem da tag; versionCode = 10000 + nº do run (sempre crescente
+      # e maior que os builds locais antigos, pra o update nunca ser recusado).
+      - name: Build APK release
+        env:
+          VERSION_NAME: ${{ steps.ver.outputs.name }}
+        run: |
+          flutter build apk --release \
+            --build-name="$VERSION_NAME" \
+            --build-number="$((10000 + GITHUB_RUN_NUMBER))"
+
+      - name: Renomeia para bipi.apk
+        run: cp build/app/outputs/flutter-apk/app-release.apk bipi.apk
+
+      - name: Publica o Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" bipi.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Bipi $GITHUB_REF_NAME" \
+            --notes "Release automático (GitHub Actions). Android apenas — ao baixar, permita instalar de fontes desconhecidas."
