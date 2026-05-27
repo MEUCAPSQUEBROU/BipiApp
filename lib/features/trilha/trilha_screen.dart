@@ -11,12 +11,48 @@ import 'data/trilha_progress.dart';
 
 /// Trilha diária estilo Duolingo: um caminho de fases que muda de perguntas
 /// a cada dia. Concluir uma fase desbloqueia a próxima.
-class TrilhaScreen extends StatelessWidget {
+class TrilhaScreen extends StatefulWidget {
   const TrilhaScreen({super.key});
 
+  @override
+  State<TrilhaScreen> createState() => _TrilhaScreenState();
+}
+
+class _TrilhaScreenState extends State<TrilhaScreen>
+    with SingleTickerProviderStateMixin {
   static const double _wave = 0.55;
 
   double _offsetFor(int i) => math.sin(i * math.pi / 2) * _wave;
+
+  // Entrada em cascata: roda uma vez ao abrir a trilha.
+  late final AnimationController _entrance = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..forward();
+
+  @override
+  void dispose() {
+    _entrance.dispose();
+    super.dispose();
+  }
+
+  /// Faz o item de índice [order] (de [count] itens) entrar com fade + subida,
+  /// escalonando o atraso pela ordem.
+  Widget _cascade(int order, int count, Widget child) {
+    final start = (order / (count + 1)) * 0.6;
+    final anim = CurvedAnimation(
+      parent: _entrance,
+      curve: Interval(start, (start + 0.45).clamp(0.0, 1.0), curve: Curves.easeOut),
+    );
+    return FadeTransition(
+      opacity: anim,
+      child: SlideTransition(
+        position:
+            Tween(begin: const Offset(0, 0.18), end: Offset.zero).animate(anim),
+        child: child,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,28 +90,36 @@ class TrilhaScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
             child: Column(
               children: [
-                _Header(allDone: allDone),
+                _cascade(0, phases.length, _Header(allDone: allDone)),
                 const SizedBox(height: 24),
                 for (var i = 0; i < phases.length; i++) ...[
-                  Align(
-                    alignment: Alignment(_offsetFor(i), 0),
-                    child: _PhaseNode(
-                      number: i + 1,
-                      state: i < current
-                          ? _NodeState.completed
-                          : (i == current
-                              ? _NodeState.current
-                              : _NodeState.locked),
-                      onTap: i == current
-                          ? () {
-                              soundService.play(Sfx.tap);
-                              context.push('/quiz', extra: phases[i]);
-                            }
-                          : null,
+                  _cascade(
+                    i + 1,
+                    phases.length,
+                    Align(
+                      alignment: Alignment(_offsetFor(i), 0),
+                      child: _PhaseNode(
+                        number: i + 1,
+                        state: i < current
+                            ? _NodeState.completed
+                            : (i == current
+                                ? _NodeState.current
+                                : _NodeState.locked),
+                        onTap: i == current
+                            ? () {
+                                soundService.play(Sfx.tap);
+                                context.push('/quiz', extra: phases[i]);
+                              }
+                            : null,
+                      ),
                     ),
                   ),
                   if (i < phases.length - 1)
-                    _Connector(from: _offsetFor(i), to: _offsetFor(i + 1)),
+                    _cascade(
+                      i + 1,
+                      phases.length,
+                      _Connector(from: _offsetFor(i), to: _offsetFor(i + 1)),
+                    ),
                 ],
                 if (allDone) ...[
                   const SizedBox(height: 28),
@@ -121,7 +165,7 @@ class _Header extends StatelessWidget {
 
 enum _NodeState { completed, current, locked }
 
-class _PhaseNode extends StatelessWidget {
+class _PhaseNode extends StatefulWidget {
   const _PhaseNode({required this.number, required this.state, this.onTap});
 
   final int number;
@@ -129,8 +173,45 @@ class _PhaseNode extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
+  State<_PhaseNode> createState() => _PhaseNodeState();
+}
+
+class _PhaseNodeState extends State<_PhaseNode>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1000),
+  );
+  late final Animation<double> _scale = Tween(begin: 1.0, end: 1.07)
+      .animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.state == _NodeState.current) _pulse.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_PhaseNode oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Liga/desliga o pulso conforme a fase vira (ou deixa de ser) a atual.
+    if (widget.state == _NodeState.current && !_pulse.isAnimating) {
+      _pulse.repeat(reverse: true);
+    } else if (widget.state != _NodeState.current && _pulse.isAnimating) {
+      _pulse.stop();
+      _pulse.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final (Color bg, Color base, Color fg, IconData icon) = switch (state) {
+    final (Color bg, Color base, Color fg, IconData icon) = switch (widget.state) {
       _NodeState.completed => (
           AppColors.success,
           AppColors.successDark,
@@ -150,37 +231,42 @@ class _PhaseNode extends StatelessWidget {
           Icons.lock_rounded,
         ),
     };
-    final size = state == _NodeState.current ? 84.0 : 70.0;
+    final size = widget.state == _NodeState.current ? 84.0 : 70.0;
+
+    Widget circle = GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: bg,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: base, offset: const Offset(0, 6)),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, color: fg, size: 34),
+      ),
+    );
+    if (widget.state == _NodeState.current) {
+      circle = ScaleTransition(scale: _scale, child: circle);
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (state == _NodeState.current) ...[
+        if (widget.state == _NodeState.current) ...[
           const _StartBubble(),
           const SizedBox(height: 8),
         ],
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              color: bg,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: base, offset: const Offset(0, 6)),
-              ],
-            ),
-            alignment: Alignment.center,
-            child: Icon(icon, color: fg, size: 34),
-          ),
-        ),
+        circle,
         const SizedBox(height: 8),
         Text(
-          'Fase $number',
+          'Fase ${widget.number}',
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            color: state == _NodeState.locked
+            color: widget.state == _NodeState.locked
                 ? AppColors.textMuted
                 : AppColors.textSecondary,
           ),
@@ -190,27 +276,53 @@ class _PhaseNode extends StatelessWidget {
   }
 }
 
-class _StartBubble extends StatelessWidget {
+class _StartBubble extends StatefulWidget {
   const _StartBubble();
 
   @override
+  State<_StartBubble> createState() => _StartBubbleState();
+}
+
+class _StartBubbleState extends State<_StartBubble>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 800),
+  )..repeat(reverse: true);
+  late final Animation<double> _bob =
+      CurvedAnimation(parent: _c, curve: Curves.easeInOut);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(color: AppColors.primaryDark, offset: const Offset(0, 3)),
-        ],
+    return AnimatedBuilder(
+      animation: _bob,
+      builder: (context, child) => Transform.translate(
+        offset: Offset(0, -5 * _bob.value),
+        child: child,
       ),
-      child: const Text(
-        'COMEÇAR',
-        style: TextStyle(
-          color: AppColors.onPrimary,
-          fontWeight: FontWeight.w800,
-          fontSize: 12,
-          letterSpacing: 0.5,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: [
+            BoxShadow(color: AppColors.primaryDark, offset: const Offset(0, 3)),
+          ],
+        ),
+        child: const Text(
+          'COMEÇAR',
+          style: TextStyle(
+            color: AppColors.onPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 12,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
     );

@@ -266,7 +266,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
 enum _OptionState { idle, selected, correct, wrong }
 
-class _OptionTile extends StatelessWidget {
+class _OptionTile extends StatefulWidget {
   const _OptionTile({
     required this.text,
     required this.state,
@@ -278,8 +278,35 @@ class _OptionTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_OptionTile> createState() => _OptionTileState();
+}
+
+class _OptionTileState extends State<_OptionTile>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _shake = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 420),
+  );
+
+  @override
+  void didUpdateWidget(_OptionTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Treme só quando esta opção passa a ser a errada selecionada.
+    if (widget.state == _OptionState.wrong &&
+        oldWidget.state != _OptionState.wrong) {
+      _shake.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _shake.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final colors = switch (state) {
+    final colors = switch (widget.state) {
       _OptionState.idle => (
         bg: AppColors.surface,
         border: AppColors.border,
@@ -302,9 +329,9 @@ class _OptionTile extends StatelessWidget {
       ),
     };
 
-    return InkWell(
+    final tile = InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
+      onTap: widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
@@ -317,7 +344,7 @@ class _OptionTile extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                text,
+                widget.text,
                 style: TextStyle(
                   color: colors.fg,
                   fontSize: 16,
@@ -326,18 +353,29 @@ class _OptionTile extends StatelessWidget {
                 ),
               ),
             ),
-            if (state == _OptionState.correct)
+            if (widget.state == _OptionState.correct)
               const Icon(Icons.check_circle, color: AppColors.success),
-            if (state == _OptionState.wrong)
+            if (widget.state == _OptionState.wrong)
               const Icon(Icons.cancel, color: AppColors.error),
           ],
         ),
       ),
     );
+
+    return AnimatedBuilder(
+      animation: _shake,
+      builder: (context, child) {
+        final t = _shake.value;
+        // Vai-e-volta amortecido na horizontal.
+        final dx = t == 0 ? 0.0 : math.sin(t * math.pi * 4) * 10 * (1 - t);
+        return Transform.translate(offset: Offset(dx, 0), child: child);
+      },
+      child: tile,
+    );
   }
 }
 
-class _FeedbackPanel extends StatelessWidget {
+class _FeedbackPanel extends StatefulWidget {
   const _FeedbackPanel({
     required this.correct,
     required this.explanation,
@@ -349,14 +387,39 @@ class _FeedbackPanel extends StatelessWidget {
   final VoidCallback onContinue;
 
   @override
+  State<_FeedbackPanel> createState() => _FeedbackPanelState();
+}
+
+class _FeedbackPanelState extends State<_FeedbackPanel>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 280),
+  )..forward();
+  late final Animation<double> _curve =
+      CurvedAnimation(parent: _c, curve: Curves.easeOutCubic);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final correct = widget.correct;
     final bg = correct ? const Color(0xFFEAF8DC) : const Color(0xFFFCE4E4);
     final fg = correct ? AppColors.successDark : AppColors.errorDark;
     final title = correct ? 'Mandou bem!' : 'Quase!';
     final icon = correct ? Icons.emoji_events : Icons.lightbulb;
 
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
+    return FadeTransition(
+      opacity: _curve,
+      child: SlideTransition(
+        position: Tween(begin: const Offset(0, 0.12), end: Offset.zero)
+            .animate(_curve),
+        child: Container(
+          margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: bg,
@@ -381,60 +444,101 @@ class _FeedbackPanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            explanation,
+            widget.explanation,
             style: TextStyle(color: fg, fontSize: 14, height: 1.4),
           ),
           const SizedBox(height: 12),
           ElevatedButton(
-            onPressed: onContinue,
+            onPressed: widget.onContinue,
             style: ElevatedButton.styleFrom(
               backgroundColor: correct ? AppColors.success : AppColors.error,
               foregroundColor: Colors.white,
             ),
             child: const Text('CONTINUAR'),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _StreakChip extends StatelessWidget {
+class _StreakChip extends StatefulWidget {
   const _StreakChip({required this.streak});
   final int streak;
 
   @override
+  State<_StreakChip> createState() => _StreakChipState();
+}
+
+class _StreakChipState extends State<_StreakChip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pop = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 320),
+  );
+  // Pulo de escala: cresce rápido e volta suave a cada acerto encadeado.
+  late final Animation<double> _scale = TweenSequence<double>([
+    TweenSequenceItem(
+      tween: Tween(begin: 1.0, end: 1.3).chain(CurveTween(curve: Curves.easeOut)),
+      weight: 40,
+    ),
+    TweenSequenceItem(
+      tween: Tween(begin: 1.3, end: 1.0).chain(CurveTween(curve: Curves.easeIn)),
+      weight: 60,
+    ),
+  ]).animate(_pop);
+
+  @override
+  void didUpdateWidget(_StreakChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.streak > oldWidget.streak && widget.streak > 0) {
+      _pop.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pop.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final active = streak > 0;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: active ? AppColors.streak.withValues(alpha: 0.12) : AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.local_fire_department,
-            size: 18,
-            color: active ? AppColors.streak : AppColors.textMuted,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '$streak',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
+    final active = widget.streak > 0;
+    return ScaleTransition(
+      scale: _scale,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: active ? AppColors.streak.withValues(alpha: 0.12) : AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.local_fire_department,
+              size: 18,
               color: active ? AppColors.streak : AppColors.textMuted,
             ),
-          ),
-        ],
+            const SizedBox(width: 4),
+            Text(
+              '${widget.streak}',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: active ? AppColors.streak : AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ResultView extends StatelessWidget {
+class _ResultView extends StatefulWidget {
   const _ResultView({
     required this.correct,
     required this.total,
@@ -456,10 +560,53 @@ class _ResultView extends StatelessWidget {
   final bool showRestart;
 
   @override
+  State<_ResultView> createState() => _ResultViewState();
+}
+
+class _ResultViewState extends State<_ResultView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..forward();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  /// Entrada (fade + sobe) numa janela [start, end] do controller.
+  Widget _enter(double start, double end, Widget child) {
+    final anim = CurvedAnimation(
+      parent: _c,
+      curve: Interval(start, end, curve: Curves.easeOutCubic),
+    );
+    return FadeTransition(
+      opacity: anim,
+      child: SlideTransition(
+        position:
+            Tween(begin: const Offset(0, 0.25), end: Offset.zero).animate(anim),
+        child: child,
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final pct = total == 0 ? 0 : ((correct / total) * 100).round();
+    final total = widget.total;
+    final correct = widget.correct;
     final ok = correct >= (total / 2).ceil();
+
+    final mascotScale = CurvedAnimation(
+      parent: _c,
+      curve: const Interval(0.0, 0.55, curve: Curves.elasticOut),
+    );
+    final countAnim = CurvedAnimation(
+      parent: _c,
+      curve: const Interval(0.35, 0.9, curve: Curves.easeOut),
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -468,70 +615,101 @@ class _ResultView extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(),
-              BipiMascot(
-                ok ? BipiMood.feliz : BipiMood.duvida,
-                height: 180,
+              ScaleTransition(
+                scale: mascotScale,
+                child: BipiMascot(
+                  ok ? BipiMood.feliz : BipiMood.duvida,
+                  height: 180,
+                ),
               ),
               const SizedBox(height: 24),
-              Text(
-                ok ? 'Boa rodada!' : 'Bora de novo?',
-                style: theme.textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+              _enter(
+                0.25,
+                0.55,
+                Text(
+                  ok ? 'Boa rodada!' : 'Bora de novo?',
+                  style: theme.textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
-                '$correct de $total ($pct%)',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: AppColors.textSecondary,
+              _enter(
+                0.35,
+                0.65,
+                AnimatedBuilder(
+                  animation: countAnim,
+                  builder: (context, _) {
+                    final shown = (correct * countAnim.value).round();
+                    final pct =
+                        total == 0 ? 0 : ((shown / total) * 100).round();
+                    return Text(
+                      '$shown de $total ($pct%)',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.local_fire_department,
-                    color: AppColors.streak,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Maior streak: $bestStreak',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+              _enter(
+                0.5,
+                0.8,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.local_fire_department,
                       color: AppColors.streak,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Text(
+                      'Maior streak: ${widget.bestStreak}',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.streak,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const Spacer(),
-              if (showRestart) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: onRestart,
-                    child: const Text('JOGAR DE NOVO'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: onHome,
-                    child: Text(homeLabel),
-                  ),
-                ),
-              ] else
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: onHome,
-                    child: Text(homeLabel),
-                  ),
-                ),
+              _enter(0.7, 1.0, _buildActions()),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildActions() {
+    if (widget.showRestart) {
+      return Column(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: widget.onRestart,
+              child: const Text('JOGAR DE NOVO'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: widget.onHome,
+              child: Text(widget.homeLabel),
+            ),
+          ),
+        ],
+      );
+    }
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: widget.onHome,
+        child: Text(widget.homeLabel),
       ),
     );
   }
