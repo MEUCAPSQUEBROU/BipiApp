@@ -27,11 +27,30 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        // No CI, assina com a debug keystore passada via env (DEBUG_STORE_FILE),
+        // para bater com a assinatura dos apps já instalados. Localmente o env
+        // não existe e o build usa a debug keystore padrão (~/.android/debug.keystore).
+        create("ci") {
+            val storePath = System.getenv("DEBUG_STORE_FILE")
+            if (storePath != null) {
+                storeFile = file(storePath)
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Mesma chave em todo lugar: no CI vem do DEBUG_STORE_FILE; localmente
+            // é a debug keystore padrão. Isso garante que updates instalem por cima.
+            signingConfig = if (System.getenv("DEBUG_STORE_FILE") != null) {
+                signingConfigs.getByName("ci")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

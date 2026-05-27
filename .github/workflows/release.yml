@@ -42,12 +42,10 @@ jobs:
 
       # Mesma debug keystore dos builds locais → mesma assinatura (updates
       # instalam por cima dos apps existentes; o SHA-1 já está no Firebase).
-      - name: Restaura a debug keystore
+      - name: Restaura a debug keystore (caminho conhecido)
         env:
           DEBUG_KEYSTORE: ${{ secrets.DEBUG_KEYSTORE }}
-        run: |
-          mkdir -p "$HOME/.android"
-          echo "$DEBUG_KEYSTORE" | base64 -d > "$HOME/.android/debug.keystore"
+        run: echo "$DEBUG_KEYSTORE" | base64 -d > "$RUNNER_TEMP/debug.keystore"
 
       - name: Versão a partir da tag (remove o "v")
         id: ver
@@ -61,6 +59,8 @@ jobs:
       - name: Build APK release
         env:
           VERSION_NAME: ${{ steps.ver.outputs.name }}
+          # Faz o build.gradle.kts assinar com a debug keystore restaurada acima.
+          DEBUG_STORE_FILE: ${{ runner.temp }}/debug.keystore
         run: |
           flutter build apk --release \
             --build-name="$VERSION_NAME" \
