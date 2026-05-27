@@ -59,6 +59,13 @@ if (-not (Test-Path $flutter)) {
     throw "Flutter nao encontrado em '$flutter'. Ajuste o caminho no topo do script."
 }
 
+# --- 1b. Localiza o gh (GitHub CLI) ----------------------------------------
+$gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
+if (-not $gh) { $gh = 'C:\Program Files\GitHub CLI\gh.exe' }
+if ($Publish -and -not (Test-Path $gh)) {
+    throw "GitHub CLI (gh) nao encontrado em '$gh'. Instale ou ajuste o caminho."
+}
+
 # --- 2. Bump da versao no pubspec ------------------------------------------
 $content = Get-Content $pubspec -Raw
 $rx = '(?m)^version:\s*(\d+)\.(\d+)\.(\d+)\+(\d+)\s*$'
@@ -97,8 +104,8 @@ $sizeMB = [math]::Round((Get-Item $apkDst).Length / 1MB, 1)
 Write-Step "APK copiado para dist\bipi.apk ($sizeMB MB)"
 
 # --- 5. Publicacao ---------------------------------------------------------
-$ghCmd = 'gh release create ' + $tag + ' "' + $apkDst + '" --repo ' + $repo +
-         ' --title "Bipi ' + $tag + '" --notes "' + $Notes + '"'
+$ghCmd = "& '" + $gh + "' release create " + $tag + " '" + $apkDst + "' --repo " +
+         $repo + " --title 'Bipi " + $tag + "' --notes '" + $Notes + "'"
 
 Write-Host ''
 if ($Publish) {
@@ -109,7 +116,7 @@ if ($Publish) {
     if ($LASTEXITCODE -ne 0) { throw "git push falhou (exit $LASTEXITCODE)." }
 
     Write-Step "Publicando o release $tag..."
-    gh release create $tag "$apkDst" --repo $repo --title "Bipi $tag" --notes $Notes
+    & $gh release create $tag "$apkDst" --repo $repo --title "Bipi $tag" --notes $Notes
     if ($LASTEXITCODE -ne 0) { throw "gh release create falhou (exit $LASTEXITCODE)." }
 
     Write-Step "Release $tag publicado! O QR do evento ja serve a versao nova."
