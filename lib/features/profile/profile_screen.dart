@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -121,23 +124,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
-    final XFile? file;
+    final XFile? picked;
     try {
-      file = await _picker.pickImage(
+      picked = await _picker.pickImage(
         source: source,
-        maxWidth: 400,
-        maxHeight: 400,
-        imageQuality: 80,
+        maxWidth: 1080,
+        maxHeight: 1080,
       );
     } catch (_) {
       _snack('Não foi possível acessar a câmera/galeria.');
       return;
     }
-    if (file == null) return; // usuário cancelou
+    if (picked == null) return; // usuário cancelou a seleção
+
+    // Etapa de enquadramento: recorte circular/quadrado (combina com o avatar).
+    final CroppedFile? cropped = await ImageCropper().cropImage(
+      sourcePath: picked.path,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      maxWidth: 512,
+      maxHeight: 512,
+      compressQuality: 80,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Enquadrar foto',
+          toolbarColor: AppColors.brandBlue,
+          toolbarWidgetColor: Colors.white,
+          activeControlsWidgetColor: AppColors.brandBlue,
+          lockAspectRatio: true,
+          hideBottomControls: true,
+          cropStyle: CropStyle.circle,
+        ),
+      ],
+    );
+    if (cropped == null) return; // usuário cancelou o recorte
 
     setState(() => _photoBusy = true);
     try {
-      final bytes = await file.readAsBytes();
+      final bytes = await File(cropped.path).readAsBytes();
       final dataUri = await profileService.updatePhoto(bytes);
       if (mounted) setState(() => _fotoUrl = dataUri);
       _snack('Foto atualizada!');

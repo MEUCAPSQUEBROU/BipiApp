@@ -3,19 +3,33 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/audio/sound_service.dart';
 import '../../core/auth/auth_service.dart';
+import '../../core/profile/profile_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/bipi_mascot.dart';
 import '../../core/widgets/user_avatar.dart';
 import 'widgets/update_banner.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Carrega foto/nome do perfil (Firestore) para o avatar refletir a foto
+    // personalizada. Mudanças posteriores chegam via ListenableBuilder.
+    profileService.ensureLoaded();
+  }
+
   String _greeting() {
-    final user = authService.currentUser;
-    final name = user?.displayName?.trim();
+    final name = (profileService.nome ?? authService.currentUser?.displayName)
+        ?.trim();
     if (name != null && name.isNotEmpty) return 'Olá, ${name.split(' ').first}!';
-    final email = user?.email;
+    final email = authService.currentUser?.email;
     if (email != null && email.isNotEmpty) return 'Olá!';
     return 'Bem-vindo!';
   }
@@ -27,10 +41,10 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            Align(
+            const Align(
               alignment: Alignment.centerRight,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 8, 16, 0),
+                padding: EdgeInsets.fromLTRB(0, 8, 16, 0),
                 child: _ProfileButton(),
               ),
             ),
@@ -46,10 +60,13 @@ class HomeScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       Text('Bipi', style: theme.textTheme.displayMedium),
                       const SizedBox(height: 8),
-                      Text(
-                        _greeting(),
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(color: AppColors.textSecondary),
+                      ListenableBuilder(
+                        listenable: profileService,
+                        builder: (context, _) => Text(
+                          _greeting(),
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
                       ),
                       const SizedBox(height: 48),
                       SizedBox(
@@ -87,27 +104,35 @@ class HomeScreen extends StatelessWidget {
 }
 
 /// Botão circular no topo da home que leva ao perfil.
+/// Reflete a foto/nome atuais do perfil (reativo via [profileService]).
 class _ProfileButton extends StatelessWidget {
   const _ProfileButton();
 
   @override
   Widget build(BuildContext context) {
-    final user = authService.currentUser;
-    final nome = (user?.displayName?.trim().isNotEmpty ?? false)
-        ? user!.displayName!.trim()
-        : (user?.email ?? '?');
-    return InkWell(
-      borderRadius: BorderRadius.circular(999),
-      onTap: () {
-        soundService.play(Sfx.tap);
-        context.push('/perfil');
+    return ListenableBuilder(
+      listenable: profileService,
+      builder: (context, _) {
+        final user = authService.currentUser;
+        final nome =
+            (profileService.nome ?? user?.displayName)?.trim();
+        final display = (nome != null && nome.isNotEmpty)
+            ? nome
+            : (user?.email ?? '?');
+        return InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: () {
+            soundService.play(Sfx.tap);
+            context.push('/perfil');
+          },
+          child: UserAvatar(
+            fotoUrl: profileService.fotoUrl ?? user?.photoURL,
+            nome: display,
+            size: 40,
+            ring: AppColors.border,
+          ),
+        );
       },
-      child: UserAvatar(
-        fotoUrl: user?.photoURL,
-        nome: nome,
-        size: 40,
-        ring: AppColors.border,
-      ),
     );
   }
 }
