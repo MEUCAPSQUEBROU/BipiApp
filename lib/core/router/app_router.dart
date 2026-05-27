@@ -7,6 +7,7 @@ import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/profile/profile_screen.dart';
 import '../../features/quiz/quiz_screen.dart';
 import '../../features/ranking/ranking_screen.dart';
 import '../../features/trilha/models/phase.dart';
@@ -55,6 +56,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/ranking',
       builder: (context, state) => const RankingScreen(),
+    ),
+    GoRoute(
+      path: '/perfil',
+      builder: (context, state) => const ProfileScreen(),
     ),
     GoRoute(
       path: '/onboarding',

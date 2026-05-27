@@ -62,14 +62,21 @@ class ScoreRepository {
     final nome = (displayName != null && displayName.isNotEmpty)
         ? displayName
         : (user.email ?? 'Anônimo');
+    final ref = _ranking.doc(user.uid);
 
     try {
-      await _ranking.doc(user.uid).set({
-        'nome': nome,
-        'fotoUrl': user.photoURL,
-        'pontos': FieldValue.increment(points),
-        'atualizadoEm': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      await _db.runTransaction((tx) async {
+        final snap = await tx.get(ref);
+        final fotoAtual = (snap.data()?['fotoUrl'] as String?)?.trim();
+        tx.set(ref, {
+          'nome': nome,
+          // Só grava a foto do Google se ainda não houver uma — assim não
+          // sobrescreve a foto personalizada salva pelo perfil.
+          if (fotoAtual == null || fotoAtual.isEmpty) 'fotoUrl': user.photoURL,
+          'pontos': FieldValue.increment(points),
+          'atualizadoEm': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      });
     } catch (_) {
       // Ranking é best-effort; ignora falhas para não interromper o quiz.
     }

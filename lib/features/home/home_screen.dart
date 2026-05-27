@@ -5,6 +5,7 @@ import '../../core/audio/sound_service.dart';
 import '../../core/auth/auth_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/bipi_mascot.dart';
+import '../../core/widgets/user_avatar.dart';
 import 'widgets/update_banner.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -24,59 +25,88 @@ class HomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const UpdateBanner(),
-                const BipiMascot(BipiMood.normal, height: 170),
-                const SizedBox(height: 16),
-                Text('Bipi', style: theme.textTheme.displayMedium),
-                const SizedBox(height: 8),
-                Text(
-                  _greeting(),
-                  style: theme.textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 48),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      soundService.play(Sfx.tap);
-                      context.push('/trilha');
-                    },
-                    child: const Text('COMEÇAR'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      soundService.play(Sfx.tap);
-                      context.push('/ranking');
-                    },
-                    icon: const Icon(Icons.emoji_events_outlined),
-                    label: const Text('RANKING'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      soundService.play(Sfx.tap);
-                      authService.signOut();
-                    },
-                    child: const Text('SAIR'),
-                  ),
-                ),
-              ],
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 8, 16, 0),
+                child: _ProfileButton(),
+              ),
             ),
-          ),
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const UpdateBanner(),
+                      const BipiMascot(BipiMood.normal, height: 170),
+                      const SizedBox(height: 16),
+                      Text('Bipi', style: theme.textTheme.displayMedium),
+                      const SizedBox(height: 8),
+                      Text(
+                        _greeting(),
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(color: AppColors.textSecondary),
+                      ),
+                      const SizedBox(height: 48),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            soundService.play(Sfx.tap);
+                            context.push('/trilha');
+                          },
+                          child: const Text('COMEÇAR'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            soundService.play(Sfx.tap);
+                            context.push('/ranking');
+                          },
+                          icon: const Icon(Icons.emoji_events_outlined),
+                          label: const Text('RANKING'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+/// Botão circular no topo da home que leva ao perfil.
+class _ProfileButton extends StatelessWidget {
+  const _ProfileButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final user = authService.currentUser;
+    final nome = (user?.displayName?.trim().isNotEmpty ?? false)
+        ? user!.displayName!.trim()
+        : (user?.email ?? '?');
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: () {
+        soundService.play(Sfx.tap);
+        context.push('/perfil');
+      },
+      child: UserAvatar(
+        fotoUrl: user?.photoURL,
+        nome: nome,
+        size: 40,
+        ring: AppColors.border,
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/bipi_mascot.dart';
+import '../../core/widgets/user_avatar.dart';
 import 'data/score_repository.dart';
 
 class RankingScreen extends StatefulWidget {
@@ -144,7 +145,7 @@ class _PodiumColumn extends StatelessWidget {
                 ? const Text('👑', style: TextStyle(fontSize: 22))
                 : null,
           ),
-          _Avatar(
+          UserAvatar(
             fotoUrl: entry.fotoUrl,
             nome: entry.nome,
             size: avatarSize,
@@ -232,7 +233,7 @@ class _RankTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          _Avatar(
+          UserAvatar(
             fotoUrl: entry.fotoUrl,
             nome: entry.nome,
             size: 40,
@@ -263,72 +264,6 @@ class _RankTile extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Avatar circular: foto do usuário (se houver) ou a inicial do nome.
-class _Avatar extends StatelessWidget {
-  const _Avatar({
-    required this.fotoUrl,
-    required this.nome,
-    required this.size,
-    required this.ring,
-  });
-
-  final String? fotoUrl;
-  final String nome;
-  final double size;
-  final Color ring;
-
-  @override
-  Widget build(BuildContext context) {
-    final trimmed = nome.trim();
-    final initial = trimmed.isEmpty ? '?' : trimmed[0].toUpperCase();
-    final fallback = _Initial(initial: initial, size: size);
-
-    Widget inner = fallback;
-    final url = fotoUrl;
-    if (url != null && url.isNotEmpty) {
-      inner = Image.network(
-        url,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => fallback,
-        loadingBuilder: (context, child, progress) =>
-            progress == null ? child : fallback,
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: ring, shape: BoxShape.circle),
-      child: ClipOval(child: SizedBox(width: size, height: size, child: inner)),
-    );
-  }
-}
-
-class _Initial extends StatelessWidget {
-  const _Initial({required this.initial, required this.size});
-  final String initial;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      color: AppColors.primary,
-      alignment: Alignment.center,
-      child: Text(
-        initial,
-        style: TextStyle(
-          color: AppColors.onPrimary,
-          fontWeight: FontWeight.w800,
-          fontSize: size * 0.42,
-        ),
       ),
     );
   }
