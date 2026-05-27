@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../core/widgets/bipi_mascot.dart';
 
 /// Tela de carregamento exibida enquanto o app inicializa (Firebase, prefs,
 /// áudio). Combina com o splash nativo (mesmo azul + mascote), então a
@@ -24,7 +23,13 @@ class SplashScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              const BipiMascot(BipiMood.normal, height: 190),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 260),
+                child: Image.asset(
+                  'assets/mascote/bipi_loading.gif',
+                  fit: BoxFit.contain,
+                ),
+              ),
               const SizedBox(height: 20),
               const Text(
                 'Bipi',
