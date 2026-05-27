@@ -7,6 +7,9 @@ class AppColors {
   static const Color primaryDark = Color(0xFFE6A600);
   static const Color onPrimary = Color(0xFF1F1F1F);
 
+  /// Azul da marca (fundo do ícone/splash).
+  static const Color brandBlue = Color(0xFF0D4872);
+
   static const Color success = Color(0xFF58CC02);
   static const Color successDark = Color(0xFF46A302);
 

@@ -61,6 +61,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
 
 # Configuração do ícone do app (gerado por: dart run flutter_launcher_icons).
 flutter_launcher_icons:
@@ -70,6 +71,17 @@ flutter_launcher_icons:
   min_sdk_android: 23
   adaptive_icon_background: "#0D4872"
   adaptive_icon_foreground: "assets/icon/app_icon_fg.png"
+
+# Splash nativo: cor da marca + mascote (gerado por: dart run flutter_native_splash:create).
+flutter_native_splash:
+  color: "#0D4872"
+  image: assets/mascote/bipi_normal.png
+  android: true
+  ios: false
+  web: false
+  android_12:
+    color: "#0D4872"
+    image: assets/mascote/bipi_normal.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

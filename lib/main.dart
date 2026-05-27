@@ -1,15 +1,10 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'app.dart';
-import 'core/audio/sound_service.dart';
-import 'core/onboarding/onboarding_service.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // No Android, lê a configuração do android/app/google-services.json.
-  await Firebase.initializeApp();
-  await onboardingService.load();
-  await soundService.load();
+  // A inicialização pesada (Firebase, prefs, áudio) roda dentro do BipiApp,
+  // exibindo a tela de loading em vez de uma tela preta.
   runApp(const BipiApp());
 }
