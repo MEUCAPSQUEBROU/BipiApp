@@ -19,6 +19,15 @@ class _BipiAppState extends State<BipiApp> {
 
   /// Inicialização do app. Enquanto roda, mostramos a [SplashScreen].
   Future<void> _bootstrap() async {
+    await Future.wait([
+      _initServices(),
+      // Tempo mínimo de splash, pra a animação de loading aparecer mesmo quando
+      // o app carrega quase instantâneo.
+      Future<void>.delayed(const Duration(milliseconds: 1600)),
+    ]);
+  }
+
+  Future<void> _initServices() async {
     // No Android, lê a configuração do android/app/google-services.json.
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp();

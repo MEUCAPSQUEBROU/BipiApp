@@ -1,11 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 
-/// Tela de carregamento: só o Bipi animado, centralizado, sobre o azul da marca.
-/// O GIF é o próprio indicador de carregamento. Combina com o splash nativo,
-/// então a transição nativo → Flutter é contínua, sem tela preta.
-class SplashScreen extends StatelessWidget {
+/// Tela de carregamento: o Bipi animado, centralizado, "flutuando" (balanço
+/// suave) sobre o azul da marca. Combina com o splash nativo, então a transição
+/// nativo → Flutter é contínua, sem tela preta.
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key, this.hasError = false, this.onRetry});
 
   /// Quando true, mostra mensagem de falha + botão de tentar de novo.
@@ -13,17 +15,54 @@ class SplashScreen extends StatelessWidget {
   final VoidCallback? onRetry;
 
   @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  // Balanço contínuo: sobe/desce (sin) + leve inclinação (cos) = flutuar.
+  late final AnimationController _float = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2600),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _float.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.brandBlue,
       body: Center(
-        child: hasError
-            ? _ErrorView(onRetry: onRetry)
-            : Image.asset(
-                'assets/mascote/bipi_loading.gif',
-                width: MediaQuery.sizeOf(context).width * 0.72,
-                fit: BoxFit.contain,
-              ),
+        child: widget.hasError
+            ? _ErrorView(onRetry: widget.onRetry)
+            : _floatingBipi(),
+      ),
+    );
+  }
+
+  Widget _floatingBipi() {
+    return AnimatedBuilder(
+      animation: _float,
+      builder: (context, child) {
+        final t = _float.value * 2 * math.pi;
+        return Transform.translate(
+          offset: Offset(0, math.sin(t) * 10), // sobe/desce ~10px
+          child: Transform.rotate(
+            angle: math.cos(t) * 0.03, // inclina ~1.7° pra dar o balanço
+            child: child,
+          ),
+        );
+      },
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 360, maxWidth: 300),
+        child: Image.asset(
+          'assets/mascote/bipi_loading.gif',
+          fit: BoxFit.contain,
+        ),
       ),
     );
   }
