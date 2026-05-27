@@ -4,9 +4,10 @@ Formato A4 retrato (1240x1800), bom para imprimir e projetar.
 Regerar: python dist/make_banner.py
 """
 import os
-import qrcode
-from qrcode.constants import ERROR_CORRECT_Q
+
 from PIL import Image, ImageDraw, ImageFont
+
+from qr_util import make_branded_qr
 
 HERE = os.path.dirname(__file__)
 ROOT = os.path.dirname(HERE)
@@ -85,12 +86,9 @@ y = pill(d, "MAIO AMARELO  ·  TRÂNSITO", y, f_bold(34), YELLOW, BLUE) + 44
 # --- Chamada ---
 y = center(d, "Baixe e teste no seu celular", y, f_bold(50), INK) + 46
 
-# --- QR em card ---
-qr = qrcode.QRCode(error_correction=ERROR_CORRECT_Q, box_size=10, border=2)
-qr.add_data(URL)
-qr.make(fit=True)
-qr_img = qr.make_image(fill_color=BLUE, back_color=WHITE).convert("RGB")
-qs = qr_img.size[0]
+# --- QR em card (com o ícone do Bipi no centro, mesmo do QR avulso) ---
+qs = 490  # mesmo tamanho de antes -> layout do banner inalterado
+qr_img = make_branded_qr(URL).resize((qs, qs), Image.LANCZOS)
 pad = 46
 card = qs + pad * 2
 cx0 = (W - card) / 2
