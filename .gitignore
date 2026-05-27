@@ -33,8 +33,11 @@ migrate_working_dir/
 /build/
 /coverage/
 
-# Artefatos de distribuição (APK renomeado + QR code para o evento).
-/dist/
+# Distribuição: ignora os binários gerados (APK, QR, banner)...
+/dist/*
+# ...mas versiona os scripts geradores (release.ps1, make_qr.py, make_banner.py).
+!/dist/*.ps1
+!/dist/*.py
 
 # Symbolication related
 app.*.symbols
